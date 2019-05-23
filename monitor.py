@@ -146,7 +146,7 @@ def send_data(data):
         client.publish(monitor_topic, payload=data, qos=0, retain=False)
         client.disconnect()
     except:
-        print("\nPublish Error:\n",e)
+        print("\nPublish Error, make sure the MQTT broker is reachable\n")
 
 while True:
     main()
