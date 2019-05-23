@@ -1,4 +1,5 @@
 import socket, time, json, datetime, platform, psutil, requests, pprint, uuid
+import paho.mqtt.client as mqtt
 
 def main():
     # Hostname Info
@@ -8,7 +9,9 @@ def main():
     # CPU Info
     cpu_count = psutil.cpu_count()
     cpu_usage = psutil.cpu_percent(interval=1)
-    print("CPU:\n\tCount:", cpu_count, "\n\tUsage:", cpu_usage)
+    cpu_temp = psutil.sensors_temperatures()
+    print("CPU:\n\tCount:", cpu_count, "\n\tUsage:", cpu_usage, "\n\tTemp:", cpu_temp)
+
 
     # Memory Info
     memory_stats = psutil.virtual_memory()
@@ -90,6 +93,7 @@ def main():
         "uptime" : uptime,
     	"cpu_count" : cpu_count,
     	"cpu_usage" : cpu_usage,
+	"cpu_temp" : cpu_temp,
     	"memory_total" : memory_total,
     	"memory_used" : memory_used,
     	"memory_used_percent" : memory_used_percent,
@@ -132,31 +136,17 @@ def get_bandwidth():
     return network
 
 def send_data(data):
-    # Attempt to send data up to 30 times
-    for attempt in range(30):
-        try:
-            # endpoint = monitoring server
-            endpoint = "http://monitor.localhost.local/api/"
-            response = requests.post(url = endpoint, data = data)
-            print("\nPOST:")
-            print("Response:", response.status_code)
-            print("Headers:")
-            pprint.pprint(response.headers)
-            print("Content:", response.content)
-            # Attempt printing response in JSON if possible
-            try:
-                print("JSON Content:")
-                pprint.pprint(response.json())
-            except:
-                print("No JSON content")
-            break
-        except requests.exceptions.RequestException as e:
-            print("\nPOST Error:\n",e)
-            # Sleep 1 minute before retrying
-            time.sleep(60)
-    else:
-        # If no connection established for half an hour, kill script
-        exit(0)
+       try:
+        broker_url = "<MQTTBroker>"
+        broker_port = <MQTTPort>
+	monitor_topic = <BrokerTopic>
+
+        client = mqtt.Client(transport="websockets")
+        client.connect(broker_url, broker_port)
+        client.publish(monitor_topic, payload=data, qos=0, retain=False)
+        client.disconnect()
+    except:
+        print("\nPublish Error:\n",e)
 
 while True:
     main()
